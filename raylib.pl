@@ -28,6 +28,8 @@
 ]).
 
 :- use_module(library(ffi)).
+:- use_module(library(os)).
+:- use_module(library(lists)).
 
 :- initialization(raylib_load).
 
@@ -35,7 +37,15 @@ raylib_load :-
     foreign_struct(color, [uint8, uint8, uint8, uint8]),
     foreign_struct(vector2, [f32, f32]),
     foreign_struct(texture, [uint32, sint32, sint32, sint32, sint32]),
-    use_foreign_module("./libraylib.so", [
+        raw_argv(As),
+    length(As,N),
+    nth1(N,As,An),
+    (
+        append("darwin",_,An), L = "./libraylib.dylib" ;
+        append("Window",_,An), L = "./raylib.dll" ;
+        L = "./libraylib.so"
+    ),
+    use_foreign_module(L, [
 	'InitWindow'([sint32, sint32, cstr], void),
 	'WindowShouldClose'([], bool),
 	'SetTargetFPS'([sint32], void),
@@ -107,7 +117,7 @@ begin_drawing :- ffi:'BeginDrawing'.
 end_drawing :- ffi:'EndDrawing'.
 is_key_down(Key0) :- key(Key0, Key), ffi:'IsKeyDown'(Key).
 get_screen_width(A) :- ffi:'GetScreenWidth'(A).
-    
+
 clear_background(Color0) :- color(Color0, Color), ffi:'ClearBackground'(Color).
 draw_text(Text, A, B, C, Color0) :- color(Color0, Color), ffi:'DrawText'(Text, A, B, C, Color).
 draw_circle(A, B, C, Color0) :- color(Color0, Color), ffi:'DrawCircle'(A, B, C, Color).
